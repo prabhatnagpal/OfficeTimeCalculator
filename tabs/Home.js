@@ -15,10 +15,13 @@ class Home extends React.Component {
         this.state = {
             curEntryTime: null,
             curExitTime: null,
+            presentDate: null,
+            btnTitle: 'Office Entry',
             count: 2,
             savings: 0,
             dues: 0,
-            btnTitle: 'Office Entry',
+            duesHours: 0,
+            duesMins: 0,
             visible: true
         };
     }
@@ -30,7 +33,8 @@ class Home extends React.Component {
         if (this.state.count === 1) {
             this.setState({
                 btnTitle: 'Office Exit',
-                curEntryTime: Moment().utc().local().format('hh:mm A')
+                curEntryTime: Moment().utc().local().format('hh:mm A'),
+                presentDate: Moment().utc().local().format('YYYYMDD')
             });
             this.setEntryTime();
         }
@@ -39,6 +43,7 @@ class Home extends React.Component {
                 btnTitle: ' ',
                 visible: !this.state.visible,
                 curExitTime: Moment().utc().local().format('hh:mm A'),
+                presentDate: Moment().utc().local().format('YYYYMDD')
             });
             this.setExitTime();
         }
@@ -47,6 +52,11 @@ class Home extends React.Component {
     resetData = () => {
         AsyncStorage.removeItem('entryTime');
         AsyncStorage.removeItem('exitTime');
+        this.setState({curEntryTime: null});
+        this.setState({curExitTime: null});
+        this.setState({btnTitle: 'Office Entry'});
+        this.setState({count: 2});
+        this.setState({visible: true});
         //AsyncStorage.clear();
     };
 
@@ -54,9 +64,10 @@ class Home extends React.Component {
         let obj = {
             btnTitleVar: 'Office Exit',
             countVar: this.state.count,
-            curEntryTimeVar: Moment().utc().local().format('hh:mm A')
+            curEntryTimeVar: Moment().utc().local().format('hh:mm A'),
+            presentDateVar: Moment().utc().local().format('YYYYMDD')
         };
-        this.entry = Moment(obj.curEntryTimeVar, "hh:mm A");
+        //this.entry = Moment(obj.curEntryTimeVar, "hh:mm A");
         AsyncStorage.setItem('entryTime', JSON.stringify(obj)).catch((errors) => console.log(errors));
     };
 
@@ -65,30 +76,40 @@ class Home extends React.Component {
             btnTitleVar: ' ',
             countVar: this.state.count,
             visibleVar: !this.state.visible,
-            curExitTimeVar: Moment().utc().local().format('hh:mm A')
+            curExitTimeVar: Moment().utc().local().format('hh:mm A'),
+            presentDateVar: Moment().utc().local().format('YYYYMDD')
         };
+
+        this.getEntryTime().done();
+
+        this.entry = Moment(this.state.curEntryTime, "hh:mm A");
         this.exit = Moment(obj.curExitTimeVar, "hh:mm A");
+
         AsyncStorage.setItem('exitTime', JSON.stringify(obj)).catch((errors) => console.log(errors));
 
         this.duration = Moment.duration(this.exit.diff(this.entry)).asMinutes();
 
-        let totalDuration = this.duration + this.state.dues + this.state.savings - 540;
+        let totalDuration = Math.round(this.duration + this.state.dues + this.state.savings - 540);
 
         if (totalDuration >= 0) {
             let savedTime = {
                 savingsVar: totalDuration
             };
             AsyncStorage.setItem('savedTime', JSON.stringify(savedTime)).catch((errors) => console.log(errors));
+            this.setState({savings: savedTime.savingsVar});
+
             AsyncStorage.removeItem('dueTime');
-            this.setState({dues: 0})
+            this.setState({dues: 0});
         }
         else {
             let dueTime = {
                 duesVar: totalDuration
             };
             AsyncStorage.setItem('dueTime', JSON.stringify(dueTime)).catch((errors) => console.log(errors));
+            this.setState({dues: dueTime.savingsVar});
+
             AsyncStorage.removeItem('savedTime');
-            this.setState({savings: 0})
+            this.setState({savings: 0});
         }
     };
 
@@ -99,6 +120,7 @@ class Home extends React.Component {
             this.setState({btnTitle: parsedData.btnTitleVar});
             this.setState({count: parsedData.countVar});
             this.setState({curEntryTime: parsedData.curEntryTimeVar});
+            this.setState({presentDate: parsedData.presentDateVar})
         }
     };
 
@@ -110,6 +132,22 @@ class Home extends React.Component {
             this.setState({count: parsedData.countVar});
             this.setState({visible: parsedData.visibleVar});
             this.setState({curExitTime: parsedData.curExitTimeVar});
+            this.setState({presentDate: parsedData.presentDateVar})
+        }
+
+        let currentDate = Moment().utc().local();
+        let startOfMonth = Moment().startOf('month');
+        let firstDay = startOfMonth.day() % 6 === 0 ? startOfMonth.add(1, 'day').day(1) : startOfMonth;
+
+        if (currentDate.format('YYYYMDD') > this.state.presentDate) {
+            this.resetData();
+            if (currentDate.format('YYYYMDD') === firstDay || currentDate.format('dddd') === 'Monday') {
+                AsyncStorage.removeItem('savedTime');
+                this.setState({savings: 0});
+
+                AsyncStorage.removeItem('dueTime');
+                this.setState({dues: 0});
+            }
         }
     };
 
@@ -141,13 +179,18 @@ class Home extends React.Component {
         return (
             <View style={styles.container}>
                 <View style={styles.container}>
-                    <View style={[styles.textContainer, {flexDirection: 'row'}]}>
+                    <View style={[{paddingTop: 25}, {backgroundColor: 'white'}, {flexDirection: 'row'}]}>
+                        <Text style={[styles.textBody, {textAlign: 'center'}, {textDecorationLine: 'underline'}, {color: '#0084ff'}]}>
+                            {this.entry.format('Do MMMM, YYYY')}
+                        </Text>
+                    </View>
+                    <View style={[styles.textContainer, {paddingTop: 35}, {flexDirection: 'row'}]}>
                         <Text style={[styles.textBody, {color: 'green'}]}>In Time:</Text>
                         <Text style={[styles.textBody, {color: 'green'}]}>{this.state.curEntryTime}</Text>
                     </View>
-                    <View style={[styles.textContainer, {flexDirection: 'row'}]}>
-                        <Text style={[styles.textBody, {color: 'red'}]}>Out Time:</Text>
-                        <Text style={[styles.textBody, {color: 'red'}]}>{this.state.curExitTime}</Text>
+                    <View style={[styles.textContainer, {paddingTop: 25}, {flexDirection: 'row'}]}>
+                        <Text style={[styles.textBody, {color: '#d32f2f'}]}>Out Time:</Text>
+                        <Text style={[styles.textBody, {color: '#d32f2f'}]}>{this.state.curExitTime}</Text>
                     </View>
                 </View>
                 <View style={[styles.container, {flex: 1.5}]}>
@@ -156,12 +199,12 @@ class Home extends React.Component {
                                                       count={this.state.count}
                                                       title={this.state.btnTitle}/> : (null,
                             this.state.dues === 0 ?
-                                <Text style={[styles.textBody, {textAlign: 'center', color: '#1A237E'}]}>
+                                <Text style={[styles.textBody, {textAlign: 'center', color: 'green'}]}>
                                     {'Swipe Left to See Savings'}
-                                </Text> : this.state.savings === 0 ?
-                                <Text style={[styles.textBody, {textAlign: 'center', color: '#1A237E'}]}>
+                                </Text> :
+                                <Text style={[styles.textBody, {textAlign: 'center', color: '#d32f2f'}]}>
                                     {'Swipe Right To See Dues'}
-                                </Text> : null)}
+                                </Text>)}
                     </View>
                     <View style={styles.resetButtonContainer}>
                         <Button sendData={() => this.resetData()} title={'Reset'}/>
@@ -177,20 +220,19 @@ export default withNavigation(Home);
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#81C784'
+        backgroundColor: '#293542'
     },
     textContainer: {
         flex: 1,
         justifyContent: 'center',
         paddingLeft: 50,
-        paddingTop: 40,
         backgroundColor: 'white'
     },
     displayButtonContainer: {
         flex: 1,
         alignItems: 'center',
-        justifyContent: 'center',
-        padding: 50
+        justifyContent: 'flex-end',
+        padding: 80
     },
     resetButtonContainer: {
         justifyContent: 'center',

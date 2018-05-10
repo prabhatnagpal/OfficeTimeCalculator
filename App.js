@@ -36,12 +36,12 @@ const AppNavigator = new TabNavigator(
                 fontSize: 23,
             },
             style: {
-                backgroundColor: '#4CAF50'
+                backgroundColor: '#d32f2f'
             },
             indicatorStyle: {
                 backgroundColor: 'white'
             },
-            inactiveTintColor: '#1A237E',
+            inactiveTintColor: '#000000',
             upperCaseLabel: false
         }
     }

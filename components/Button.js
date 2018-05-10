@@ -4,7 +4,7 @@ import {Text, StyleSheet, TouchableOpacity} from 'react-native';
 const Button = (props) => {
     return (
         <TouchableOpacity
-            style={[styles.buttonBody, {elevation: props.count <= 0 ? 0 : 8}]}
+            style={[props.count === 2 ? styles.greenButtonBody : styles.redButtonBody, {elevation: props.count <= 0 ? 0 : 8}]}
             onPress={() => props.sendData()} activeOpacity={props.count <= 0 ? 1 : 0.2}>
             <Text style={styles.buttonText}>
                 {props.title}
@@ -14,18 +14,24 @@ const Button = (props) => {
 };
 
 const styles = StyleSheet.create({
-    buttonBody: {
-        backgroundColor: '#1A237E',
+    greenButtonBody: {
+        backgroundColor: 'green',
         padding: 17,
         width: '100%',
         alignItems: 'center',
-        justifyContent: 'center',
-        // elevation: 8
+        justifyContent: 'center'
+    },
+    redButtonBody: {
+        backgroundColor: '#d32f2f',
+        padding: 17,
+        width: '100%',
+        alignItems: 'center',
+        justifyContent: 'center'
     },
     buttonText: {
         color: 'white',
         fontSize: 25,
-        fontWeight: '600',
+        fontWeight: '600'
     },
 });
 
