@@ -7,7 +7,8 @@ export default class Savings extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            savings: 0
+            savings: null,
+            dues: 0
         };
     }
 
@@ -20,10 +21,17 @@ export default class Savings extends React.Component {
         let savedTime = await AsyncStorage.getItem('savedTime');
         let parsedSavedTime = JSON.parse(savedTime);
         if (parsedSavedTime !== null) {
-            this.setState({savings: parsedSavedTime.savingsVar});
+            let hours = Math.floor(parsedSavedTime.savingsVar / 60);
+            let mins = parsedSavedTime.savingsVar % 60;
+            if (hours === 0)
+                this.setState({savings: mins + ' Mins'});
+            else if (hours > 0 && mins === 0)
+                this.setState({savings: hours + ' Hrs'});
+            else if (hours > 0 && mins > 0)
+                this.setState({savings: hours + ' Hrs ' + mins + ' Mins'});
         }
         else {
-            this.setState({savings: 0})
+            this.setState({savings: 0 + ' Mins'})
         }
     };
 
@@ -46,8 +54,15 @@ export default class Savings extends React.Component {
             <View style={styles.container}>
                 <View style={styles.container}>
                     <View style={[styles.textContainer]}>
-                        <Text style={[styles.textBody, {color: 'green'}]}>Current
-                            Savings:  {this.displaySavingTime()}</Text>
+                        <Text style={[styles.textBody, {fontSize: 28}, {textShadowColor: 'black'}, {
+                            textShadowOffset: {
+                                width: 1,
+                                height: 1
+                            }
+                        }, {textShadowRadius: 5}, {color: 'green'}]}>Current Savings</Text>
+                        <Text style={[styles.textBody, {fontSize: 27}, {paddingTop: 20}, {color: 'green'}]}>
+                            {this.displaySavingTime()}
+                        </Text>
                     </View>
                 </View>
                 <View style={[styles.container, {flex: 1.5, justifyContent: 'flex-end'}]}>
@@ -63,13 +78,11 @@ export default class Savings extends React.Component {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#81C784'
+        backgroundColor: '#293542'
     },
     textContainer: {
         flex: 1,
         justifyContent: 'center',
-        paddingLeft: 50,
-        paddingTop: 40,
         backgroundColor: 'white'
     },
     displayButtonContainer: {
@@ -79,12 +92,12 @@ const styles = StyleSheet.create({
         padding: 50
     },
     resetButtonContainer: {
+        backgroundColor: 'green',
         justifyContent: 'center',
         alignItems: 'center',
     },
     textBody: {
-        flex: 1,
-        fontSize: 25,
-        fontWeight: '600'
+        fontWeight: '600',
+        textAlign: 'center',
     }
 });
